@@ -1,4 +1,15 @@
 class Ticker {
+  static time = performance.now()
+  static instances = []
+  static start() {
+    let self = this;
+    requestAnimationFrame(tick);
+    function tick() {
+      self.time = performance.now();
+      self.instances = self.instances.filter(i => !i.dead && !i.render());
+      requestAnimationFrame(tick);
+    }
+  }
   /**
    * @type {{type:string,from:number|number[],to:number|number[]}[]}
    */
@@ -10,30 +21,42 @@ class Ticker {
   constructor(element, duration) {
     this.element = element;
     this.duration = duration;
+    this.dead = false;
+    //是否是暂停状态
+    this.currState = false;
+    this.running = false;
+    Ticker.instances.push(this);
   }
-  beginTime
+  // beginTime
   //添加动画
   addAnimation(options) {
     this.animations.push(options);
   }
   //开始动画
-  start() {
-    let self = this;
-    this.running = true;
-    this.beginTime = performance.now()
-    function tick() {
-      if (!self.running) return;
-      self.render();
-      requestAnimationFrame(tick);
-    }
-    //作用？
-    requestAnimationFrame(tick);
-  }
+  // start() {
+  //   let self = this;
+  //   this.running = true;
+  //   this.beginTime = performance.now()
+  //   //作用？
+  //   requestAnimationFrame(tick);
+  //   function tick() {
+  //     if (!self.running) return;
+  //     self.render();
+  //     requestAnimationFrame(tick);
+  //   }
+  //   //之前是这样的
+  //   //requestAnimationFrame(tick);
+    
+  // }
   running
-
   render() {
-    let cur = performance.now();
-    let pro = (cur - this.beginTime) / this.duration;
+    if(!this.running) return;
+    this.beginTime = performance.now();
+    if(this.currState) {
+      let pro = (Ticker.time - this.beginTime) / this.duration + this.proBack;
+    }
+    let pro = (Ticker.time - this.beginTime) / this.duration;
+    console.log(pro);
     if (pro >= 1) {
       pro = 1;
       this.running = false;
@@ -57,18 +80,38 @@ class Ticker {
     // console.log(transform);
     this.element.style.transform = transform;
   }
-
   differ(from, to, pro) {
     return typeof from === 'number' ? from + (to - from) * pro : Array.from(to, (item, index) => (item - from[index]) * pro + from[index])
+  }
+
+  currState = false
+  proBack
+  start() {
+    this.running = true;
   }
   //停止/取消动画
   cancel() {
     this.running = false;
+    // this.element.style.transform = '';
+    this.currState = true;
+    this.proBack = this.pro 
+    console.log(this.currState);
   }
-
+  //继续动画
+  goOn() {
+    this.running = true;
+  }
+  //删除动画
+  delete() {
+    this.dead = true;
+  }
 }
 
-let ticker = new Ticker(test1, 5000);
+export function createTicker(element, duration) {
+  return new Ticker(element, duration);
+}
+
+let ticker = new Ticker(cube, 5000);
 
 ticker.addAnimation({
   type: 'translate',
@@ -86,15 +129,5 @@ ticker.addAnimation({
   from: 0,
   to: 180
 });
-ticker.start()
-
-
-setTimeout(() => {
-  ticker.cancel()
-}
-  , 4000
-)
-
-// export function createTicker(element, duration) {
-//   return new Ticker(element, duration);
-// }
+console.log(ticker);
+Ticker.start()
