@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    .container {
+      display: flex;
+      flex-direction: column;
+
+    }
+
+    .item {
+      display: flex;
+      margin: 20px;
+      height: 250px;
+      /* align-content: space-around; */
+      justify-content: space-around;
+    }
+
+    img {
+      width: 100px;
+      height: 100px;
+      background-color: #fff;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="item">
+      <img src="./images/7.gif" id="demo1" alt="">
+      <div>
+        <h3 style="text-align: center;">item1</h3>
+        <hr />
+        <!-- <button onclick="start()">start </button> -->
+        <button onclick="stop1()">stop</button>
+      </div>
+    </div>
+    <div class="item">
+      <img src="./images/7.gif" id="demo2" alt="">
+      <div>
+        <h3 style="text-align: center;">item2</h3>
+        <hr />
+        <!-- <button onclick="start()">start </button> -->
+        <button onclick="stop2()">stop</button>
+      </div>
+    </div>
+    <div class="item">
+      <img src="./images/7.gif" id="demo3" alt="">
+      <div>
+        <h3 style="text-align: center;">item3</h3>
+        <hr />
+        <!-- <button onclick="start()">start </button> -->
+        <button onclick="stop3()">stop</button>
+      </div>
+    </div>
+  </div>
+  <script>
+    class Ticker {
+      /**
+       * @type {{type:string,from:number|number[],to:number|number[]}[]}
+       */
+      animations = []
+      /**
+       * @type {HTMLDivElement}
+       */
+      element
+      constructor(element, duration) {
+        this.element = element;
+        this.duration = duration;
+      }
+      beginTime
+      //添加动画
+      addAnimation(options) {
+        this.animations.push(options);
+      }
+      //开始动画
+      start() {
+        let self = this;
+        this.running = true;
+        this.beginTime = performance.now()
+        function tick() {
+          if (!self.running) return;
+          self.render();
+          requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+      }
+      running
+      render() {
+        let cur = performance.now();
+        let pro = (cur - this.beginTime) / this.duration;
+        if (pro >= 1) {
+          pro = 1;
+          this.running = false;
+        }
+        let obj = {};
+        for (const { type, from, to } of this.animations) {
+          obj[type] = this.differ(from, to, pro);
+        }
+        //对动画效果进行添加
+        let transform = '';
+        if (obj.translate) {
+          transform += `translate(${obj.translate[0] | 0}px, ${obj.translate[1] | 0}px)`;
+        }
+
+        if (obj.scale) {
+          transform += `scale(${obj.scale})`;
+        }
+        if (obj.rotateY) {
+          transform += `rotateY(${obj.rotateY | 0}deg)`;
+        }
+        // console.log(transform);
+        this.element.style.transform = transform;
+      }
+
+      differ(from, to, pro) {
+        return typeof from === 'number' ? from + (to - from) * pro : Array.from(to, (item, index) => (item - from[index]) * pro + from[index])
+      }
+      //停止/取消动画
+      cancel() {
+        this.running = false;
+      }
+
+    }
+
+    //测试用例1
+    let test1 = new Ticker(demo1, 5000);
+    test1.addAnimation({
+      type: 'translate',
+      from: [0, 0],
+      to: [100, 200]
+    });
+    test1.addAnimation({
+      type: 'scale',
+      from: 1,
+      to: 1.5
+    });
+    test1.addAnimation({
+      type: 'rotateY',
+      from: 0,
+      to: 180
+    });
+    test1.start()
+
+    //测试用例2
+    let test2 = new Ticker(demo2, 5000);
+    test2.addAnimation({
+      type: 'translate',
+      from: [0, 0],
+      to: [200, 200]
+    });
+    test2.addAnimation({
+      type: 'scale',
+      from: 1,
+      to: 0.5
+    });
+    test2.addAnimation({
+      type: 'rotateY',
+      from: 0,
+      to: 720
+    });
+    test2.start()
+
+    //测试用例3
+    let test3 = new Ticker(demo3, 10000);
+    test3.addAnimation({
+      type: 'rotateY',
+      from: 0,
+      to: 3600
+    });
+    test3.start()
+
+
+  function stop1() {
+    test1.cancel();
+  }
+  function stop2() {
+    test2.cancel();
+  }
+  function stop3() {
+    test3.cancel();
+  }
+  </script>
+</body>
+
+</html>
