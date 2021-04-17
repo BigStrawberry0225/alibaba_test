@@ -1,11 +1,14 @@
-class Ticker {
+export class Ticker {
   static time = performance.now()
   static instances = []
+  static delta = 0
   static start() {
     let self = this;
     requestAnimationFrame(tick);
     function tick() {
-      self.time = performance.now();
+      const now = performance.now();
+      self.delta = now - self.time;
+      self.time = now;
       self.instances = self.instances.filter(i => !i.dead && !i.render());
       requestAnimationFrame(tick);
     }
@@ -46,24 +49,21 @@ class Ticker {
   //   }
   //   //之前是这样的
   //   //requestAnimationFrame(tick);
-    
+
   // }
   running
+  pro = 0
   render() {
-    if(!this.running) return;
-    this.beginTime = performance.now();
-    if(this.currState) {
-      let pro = (Ticker.time - this.beginTime) / this.duration + this.proBack;
-    }
-    let pro = (Ticker.time - this.beginTime) / this.duration;
-    console.log(pro);
-    if (pro >= 1) {
-      pro = 1;
+    if (!this.running) return;
+    this.pro += Ticker.delta / this.duration;
+    console.log(this.pro);
+    if (this.pro >= 1) {
+      this.pro = 1;
       this.running = false;
     }
     let obj = {};
     for (const { type, from, to } of this.animations) {
-      obj[type] = this.differ(from, to, pro);
+      obj[type] = this.differ(from, to, this.pro);
     }
     //对动画效果进行添加
     let transform = '';
@@ -83,51 +83,72 @@ class Ticker {
   differ(from, to, pro) {
     return typeof from === 'number' ? from + (to - from) * pro : Array.from(to, (item, index) => (item - from[index]) * pro + from[index])
   }
-
-  currState = false
-  proBack
   start() {
     this.running = true;
   }
   //停止/取消动画
   cancel() {
     this.running = false;
-    // this.element.style.transform = '';
-    this.currState = true;
-    this.proBack = this.pro 
-    console.log(this.currState);
-  }
-  //继续动画
-  goOn() {
-    this.running = true;
   }
   //删除动画
-  delete() {
+  destroy() {
     this.dead = true;
   }
 }
 
-export function createTicker(element, duration) {
-  return new Ticker(element, duration);
-}
 
-let ticker = new Ticker(cube, 5000);
+// let ticker = new Ticker(cube, 5000);
 
-ticker.addAnimation({
-  type: 'translate',
-  from: [0, 0],
-  to: [100, 200]
-});
-ticker.addAnimation({
-  type: 'scale',
-  from: 1,
-  to: 1.5
-});
+// ticker.addAnimation({
+//   type: 'translate',
+//   from: [0, 0],
+//   to: [100, 200]
+// });
+// ticker.addAnimation({
+//   type: 'scale',
+//   from: 1,
+//   to: 1.5
+// });
 
-ticker.addAnimation({
-  type: 'rotateY',
-  from: 0,
-  to: 180
-});
-console.log(ticker);
+// ticker.addAnimation({
+//   type: 'rotateY',
+//   from: 0,
+//   to: 180
+// });
+// console.log(ticker);
 Ticker.start()
+const actions = [
+  [{
+    type: 'rotateY',
+    from: 0,
+    to: 1800
+  }
+  ],
+  [{
+    type: 'rotateY',
+    from: 0,
+    to: 720
+  }
+  ],
+  [{
+    type: 'rotateY',
+    from: 0,
+    to: 360
+  }
+  ]
+]
+document.querySelectorAll('.item').forEach((ele, index) => {
+  let img = ele.querySelector('img');
+  let start = ele.querySelector('.start');
+  let stop = ele.querySelector('.stop');
+  let ticker = new Ticker(img, 5000);
+  for (const animation of actions[index]) {
+    ticker.addAnimation(animation);
+  }
+  start.onclick = _ => {
+    ticker.running = true;
+  }
+  stop.onclick = _ => {
+    ticker.running = false;
+  }
+})
